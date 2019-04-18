@@ -1,0 +1,2 @@
+gethashvalue.exe
+pause

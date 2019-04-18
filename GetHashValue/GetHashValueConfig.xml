@@ -1,0 +1,7 @@
+<config>
+	<db_user>root</db_user>
+	<db_password>123456</db_password>
+	<db_ip>localhost</db_ip>
+	<db_name>TESTDB</db_name>
+	<xml_name>oa3.xml</xml_name>
+</config>

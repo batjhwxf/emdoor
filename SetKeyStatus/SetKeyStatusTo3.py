@@ -6,7 +6,7 @@ except ImportError:
 import sys 
 
 import os
-log = "GetHashValue.log"
+log = "SetKeyStatusTo3.log"
 
 if os.path.exists(log):
     os.remove(log)
@@ -111,33 +111,15 @@ def print_pass():
 	win32api.MessageBox(0, 'PASS', "INFO",0) 
 	exit(0)
 
-def create_table():
+def set_status_3(po_number):
     try:
-        create_tb_cmd='''
-        CREATE TABLE IF NOT EXISTS [dbo].[ProductHash]
-        ([key_id] VARCHAR(100) NOT NULL,
-        [state] VARCHAR(100),
-        [hash] VARCHAR(max),
-        PRIMARY KEY(id)
-        );
-        ''' 
-        cur.execute(create_tb_cmd)  
-    except Exception, e:  
-        print 'Not create table.'
-    try:
-        insert_dt_cmd="INSERT INTO [dbo].[ProductHash] ([KEY_ID], [STATE], [HASH]) VALUES ('%s', '%s', '%s');" %(key_id, key_state, key_hash)
-        ret=cur.execute(insert_dt_cmd)  
-        cur.execute('select [hash] from [dbo].[ProductHash] where [key_id]=%s', key_id)
-        hash = str(cur.fetchone())
-        print 'hash:', hash
-        if len(hash) > 2000:
-            pass
-        else:
-            print_error('key id:'+str(key_id)+", hash length error! "+str(len(hash)))
+        update_status = "update [dbo].[ProductKeyInfo] set [ProductKeyStateID] = 3 where [ProductKeyStateID]=15 and [OEMPONumber]='%s';" %(po_number)
+        cur.execute(update_status)
         conn.commit()
-        cur.close() 
-    except Exception, e:  
+    except Exception, e:
+        print("Update data error")
         print_error(str(e))
+
 
 def get_node(node_name): 
     for node in root.findall(node_name):
@@ -145,63 +127,37 @@ def get_node(node_name):
       #print node_name, " : ", node
       return node
 
-try: 
-  tree = ET.parse("GetHashValueConfig.xml")     #打开xml文档 
-  root = tree.getroot()         #获得root节点  
-except Exception, e: 
-  print_error(str(e))
+if __name__ == "__main__":
+    po_number = "ffffff"
+    with open('ponumber.txt', 'r') as f:
+        po_number = f.read()
+    try: 
+      tree = ET.parse("SetKeyStatusToConfig.xml")     #打开xml文档 
+      root = tree.getroot()         #获得root节点
+    except Exception, e:
+      print("SetKeyStatusToConfig error")
+      print_error(str(e))
 
 
-print "*"*50
-db_user=get_node("db_user")
-db_password=get_node("db_password")
-db_ip=get_node("db_ip")
-db_name=get_node("db_name")
-xml_name=get_node("xml_name")
-print "*"*50,"\n\n"
+    print "*"*50
+    db_user=get_node("db_user")
+    db_password=get_node("db_password")
+    db_ip=get_node("db_ip")
+    db_name=get_node("db_name")
+    print "*"*50,"\n\n"
 
-try: 
-  tree = ET.parse(xml_name)     #打开xml文档 
-  #root = ET.fromstring(country_string) #从字符串传递xml 
-  root = tree.getroot()         #获得root节点  
-except Exception, e: 
-  print_error(str(e))
+    try:
+        conn=pymssql.connect(host=db_ip,user=db_user,password=db_password,database=db_name)
+        cur=conn.cursor()
+        set_status_3(po_number)
+        conn.close()
+    except Exception, e:
+        print_error(str(e))
 
-  
-print "*"*50
-for key_id in root.findall('ProductKeyID'):
-  key_id = str(key_id.text) 
-  print key_id
-for key_state in root.findall('ProductKeyState'): 
-  key_state = str(key_state.text)    
-  print key_state 
-for key_hash in root.findall('HardwareHash'):
-  key_hash = str(key_hash.text)
-  print key_hash 
-if len(key_hash) < 2000:
-  print_error('key id:'+str(key_id)+", hash length error! "+str(len(hash)))
-print "*"*50
- 
-try:
-    conn=pymssql.connect(host=db_ip,user=db_user,password=db_password,database=db_name)
-    cur=conn.cursor()
-except Exception, e:
-    print_error(str(e))
+    f=file(log, "w")
+    f.write("pass")
+    f.close()
 
-'''
-cur.execute('SELECT * FROM [dbo].[KeyState]')
-row=cur.fetchone()
-while row:
-    print("%s"%(row[0]))
-    row=cur.fetchone()
-'''
-create_table()
-conn.close()
-
-f=file(log, "w")
-f.write("pass")
-f.close()
-
-print_pass()
+    print_pass()
 
 
